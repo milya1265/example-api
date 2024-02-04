@@ -9,9 +9,8 @@ import (
 )
 
 func NewDatabaseClient(sc config.StorageConfig) (*sql.DB, error) {
-	//dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-	//	sc.Username, sc.Password, sc.Host, sc.Port, sc.Database, sc.SSLMode) //
-	dsn := "postgres://dmilyano:qwerty@database:5432/warehouse?sslmode=disable"
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+		sc.Username, sc.Password, sc.Host, sc.Port, sc.Database, sc.SSLMode)
 	fmt.Println(dsn)
 
 	db, err := sql.Open("postgres", dsn)
