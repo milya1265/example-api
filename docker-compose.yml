@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  app:
+    image: lamodapi
+    container_name: my_app
+    build: .
+    ports:
+      - 8081:8081
+    restart: on-failure
+    volumes:
+      - api:/usr/src/app
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      database:
+        condition: service_healthy
+    networks:
+      - fullstack
+
+  database:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      - POSTGRES_DB=${DATABASE}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - fullstack
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DATABASE}" ]
+      interval: 2s
+      timeout: 1s
+      retries: 5
+      start_period: 4s
+
+  migrate:
+    image: migrate/migrate
+    networks:
+      - fullstack
+    volumes:
+      - ./migrations:/migrations
+#    command: ["ls -ld $PWD/*"]
+    command: ["-path", "migrations", "-database",  "postgres://${DB_USER}:${DB_PASSWORD}@database:5432/${DATABASE}?sslmode=disable", "up"]
+    links:
+      - database
+    depends_on:
+      database:
+        condition: service_healthy
+
+
+networks:
+  fullstack:
+    driver: bridge
+
+volumes:
+  api:

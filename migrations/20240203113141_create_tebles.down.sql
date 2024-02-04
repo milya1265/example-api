@@ -1,0 +1,4 @@
+DROP TABLE product CASCADE;
+DROP TABLE warehouse CASCADE;
+DROP TABLE warehouse_product CASCADE;
+DROP TABLE reservation CASCADE;

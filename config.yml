@@ -1,0 +1,10 @@
+listen:
+  type: port
+  port: app:8081
+storage:
+  host: database
+  port: 5432
+  database: warehouse
+  username: dmilyano
+  password: qwerty
+  ssl_mode: disable
