@@ -4,7 +4,7 @@ listen:
 storage:
   host: database
   port: 5432
-  database: warehouse
-  username: dmilyano
-  password: qwerty
+  database:
+  username:
+  password:
   ssl_mode: disable
