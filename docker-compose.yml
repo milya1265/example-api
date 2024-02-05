@@ -43,7 +43,6 @@ services:
       - fullstack
     volumes:
       - ./migrations:/migrations
-#    command: ["ls -ld $PWD/*"]
     command: ["-path", "migrations", "-database",  "postgres://${DB_USER}:${DB_PASSWORD}@database:5432/${DATABASE}?sslmode=disable", "up"]
     links:
       - database

@@ -9,14 +9,12 @@ import (
 	"example1/internal/repository"
 )
 
-const (
-	ErrInvalidUniqueCode     = "invalid unique code"
-	ErrInternal              = "internal error"
-	ErrInvalidWarehouse      = "invalid warehouse id"
-	ErrWarehouseUnavailable  = "warehouse is unavailable"
-	ErrNotEnoughProduct      = "not enough product"
-	ErrNonExistReservationId = "non-existent reservation id"
-)
+var ErrInvalidUniqueCode = errors.New("invalid unique code")
+var ErrInternal = errors.New("internal error")
+var ErrInvalidWarehouse = errors.New("invalid warehouse id")
+var ErrWarehouseUnavailable = errors.New("warehouse is unavailable")
+var ErrNotEnoughProduct = errors.New("not enough product")
+var ErrNonExistReservationId = errors.New("non-existent reservation id")
 
 type productService struct {
 	ProductRepository   repository.ProductRepository
@@ -44,14 +42,12 @@ func (s *productService) Reserve(reservation *DTO.ReqReserveProduct) (*DTO.ResRe
 
 	available, err := s.WarehouseRepository.CheckAvailable(reservation.WarehouseID)
 	if err != nil {
-		err = errors.New(ErrInvalidWarehouse)
-		return nil, err
+		return nil, ErrInvalidWarehouse
 	}
 
 	if available == false {
 		logger.ErrLog.Println(err)
-		err = errors.New(ErrWarehouseUnavailable)
-		return nil, err
+		return nil, ErrWarehouseUnavailable
 	}
 
 	for i := 0; i < len(reservation.UniqueCodes); i++ {
@@ -65,29 +61,29 @@ func (s *productService) Reserve(reservation *DTO.ReqReserveProduct) (*DTO.ResRe
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				result.Unsuccessful = append(result.Unsuccessful, re.ProductCode)
-				result.Errors = append(result.Errors, ErrInvalidUniqueCode)
+				result.Errors = append(result.Errors, ErrInvalidUniqueCode.Error())
 				continue
 			}
 			result.Unsuccessful = append(result.Unsuccessful, re.ProductCode)
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 			continue
 		}
 
 		if leftCount < re.Count {
 			result.Unsuccessful = append(result.Unsuccessful, re.ProductCode)
-			result.Errors = append(result.Errors, ErrNotEnoughProduct)
+			result.Errors = append(result.Errors, ErrNotEnoughProduct.Error())
 			continue
 		}
 		err = s.ProductRepository.ChangeLeftCount(re.ProductCode, re.WarehouseID, leftCount-re.Count)
 		if err != nil {
 			result.Unsuccessful = append(result.Unsuccessful, re.ProductCode)
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 			continue
 		}
 		re, err = s.ProductRepository.ReserveProduct(re)
 		if err != nil {
 			result.Unsuccessful = append(result.Unsuccessful, re.ProductCode)
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 		} else {
 			s := DTO.Successful{
 				ID:         re.ID,
@@ -113,31 +109,31 @@ func (s *productService) FreeReservation(reservations *DTO.ReqFreeReservation) (
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				result.Unsuccessful = append(result.Unsuccessful, reservations.ID[i])
-				result.Errors = append(result.Errors, ErrNonExistReservationId)
+				result.Errors = append(result.Errors, ErrNonExistReservationId.Error())
 				continue
 			}
 			result.Unsuccessful = append(result.Unsuccessful, reservations.ID[i])
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 			continue
 		}
 
 		available, err := s.WarehouseRepository.CheckAvailable(warehouseID)
 		if err != nil {
 			result.Unsuccessful = append(result.Unsuccessful, reservations.ID[i])
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 			continue
 		}
 
 		if available == false {
 			result.Unsuccessful = append(result.Unsuccessful, reservations.ID[i])
-			result.Errors = append(result.Errors, ErrWarehouseUnavailable)
+			result.Errors = append(result.Errors, ErrWarehouseUnavailable.Error())
 			continue
 		}
 
 		err = s.ProductRepository.DeleteReservation(reservations.ID[i])
 		if err != nil {
 			result.Unsuccessful = append(result.Unsuccessful, reservations.ID[i])
-			result.Errors = append(result.Errors, ErrInternal)
+			result.Errors = append(result.Errors, ErrInternal.Error())
 			continue
 		}
 

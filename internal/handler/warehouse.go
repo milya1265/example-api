@@ -1,16 +1,16 @@
 package handler
 
 import (
+	"errors"
 	"example1/internal/DTO"
+	"example1/internal/logger"
 	"example1/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-const (
-	ErrInvalidBody   = "invalid request body"
-	ErrInternalError = "internal error"
-)
+var ErrInvalidBody = errors.New("invalid request body")
+var ErrInternalError = errors.New("internal error")
 
 type warehouseHandler struct {
 	Service service.WarehouseService
@@ -34,17 +34,18 @@ func (h *warehouseHandler) GetAllProducts(c *gin.Context) {
 	req := DTO.ReqGetProducts{}
 	err := c.BindJSON(&req)
 	if err != nil || req.WarehouseID == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": ErrInvalidBody})
+		logger.ErrLog.Println(err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": ErrInvalidBody.Error()})
 		return
 	}
 
 	res, err := h.Service.GetProducts(&req)
 	if err != nil {
-		if service.ErrNoProducts == err.Error() {
+		if errors.Is(service.ErrNoProducts, err) {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": ErrInternalError})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": ErrInternalError.Error()})
 		return
 	}
 

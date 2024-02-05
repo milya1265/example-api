@@ -64,7 +64,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name: "IM TEAPOT All one bad code and one not enough",
+			name: "Bad request - one bad code and one not enough",
 			requestBody: "{\n    \"warehouse_id\": 2,\n    \"unique_codes\": [\n        \"olkij\",\n        \"tghyuj\"\n   " +
 				" ],\n    \"counts\": [\n        1000,\n        10000\n    ]\n}",
 			reqDTO: DTO.ReqReserveProduct{
@@ -99,7 +99,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name: "IM TEAPOT unavailable warehouse",
+			name: "Bad request - unavailable warehouse",
 			requestBody: "{\n    \"warehouse_id\": 2,\n    \"unique_codes\": [\n        \"olkij\",\n        \"tghyuj\"\n   " +
 				" ],\n    \"counts\": [\n        1000,\n        10000\n    ]\n}",
 			reqDTO: DTO.ReqReserveProduct{
@@ -124,7 +124,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name: "MULTI STATUS",
+			name: "Multi - Status",
 			requestBody: "{\n    \"warehouse_id\": 2,\n    \"unique_codes\": [\n        \"olkij\",\n        " +
 				"\"tghyuj\",\n        \"tghyuj\"\n    ],\n    \"counts\": [\n        1000,\n        10000,\n     " +
 				"   1000\n    ]\n}",
@@ -167,7 +167,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name:        "LACK OF DATA",
+			name:        "Lack of data",
 			requestBody: "{\n    \"warehouse_id\": 2,\n    \"counts\": [\n        1000,\n        10000,\n        1000\n    ]\n}",
 			reqDTO: DTO.ReqReserveProduct{
 				WarehouseID: 2,
@@ -184,7 +184,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name:        "INVALID BODY",
+			name:        "Invalid Body",
 			requestBody: "\t{\n   \"warehouse_id\": 2,\n   \"counts\": [\n       1000,\n       \"10000\",\n       1000\n   ]\n}",
 			reqDTO:      DTO.ReqReserveProduct{},
 			mockBehaviour: func(s mock_service.MockProductService, product *DTO.ReqReserveProduct) {
@@ -194,7 +194,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name:        "INVALID BODY",
+			name:        "Invalid Body",
 			requestBody: "\t{\n   \"warehouse_id\": 2,\n   \"counts\": [\n       1000,\n       \"10000\",\n       1000\n   ]\n}",
 			reqDTO:      DTO.ReqReserveProduct{},
 			mockBehaviour: func(s mock_service.MockProductService, product *DTO.ReqReserveProduct) {
@@ -204,7 +204,7 @@ func TestProductHandler_Register(t *testing.T) {
 		},
 
 		{
-			name:        "INVALID WAREHOUSE",
+			name:        "Invalid warehouse",
 			requestBody: "{\n    \"warehouse_id\": 12,\n    \"unique_codes\": [\n        \"olkiuj\",\n        \"tghyuj\"\n    ],\n    \"counts\": [\n        1000,\n        1200\n    ]\n}",
 			reqDTO: DTO.ReqReserveProduct{
 				WarehouseID: 12,
@@ -220,7 +220,7 @@ func TestProductHandler_Register(t *testing.T) {
 			mockBehaviour: func(s mock_service.MockProductService, product *DTO.ReqReserveProduct) {
 				s.EXPECT().Reserve(product).Return(
 					nil,
-					errors.New(service.ErrInvalidWarehouse),
+					service.ErrInvalidWarehouse,
 				)
 			},
 			expectedResponseBody: "{\"error\":\"invalid warehouse id\"}",

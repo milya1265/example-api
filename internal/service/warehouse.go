@@ -7,9 +7,7 @@ import (
 	"example1/internal/repository"
 )
 
-const (
-	ErrNoProducts = "no products"
-)
+var ErrNoProducts = errors.New("no products")
 
 type warehouseService struct {
 	Repository repository.WarehouseRepository
@@ -25,10 +23,11 @@ type WarehouseService interface {
 
 func (s *warehouseService) GetProducts(req *DTO.ReqGetProducts) (*DTO.ResGetProducts, error) {
 	products, err := s.Repository.AllProducts(req.WarehouseID)
+	if errors.Is(err, sql.ErrNoRows) || len(products) == 0 {
+		return nil, ErrNoProducts
+	}
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New(ErrNoProducts)
-		}
+
 		return nil, err
 	}
 	return &DTO.ResGetProducts{ProductsCodes: products}, nil

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"example1/internal/DTO"
 	"example1/internal/logger"
 	"example1/internal/service"
@@ -8,10 +9,8 @@ import (
 	"net/http"
 )
 
-const (
-	LackOfDataError  = "lack of data"
-	InvalidBodyError = "invalid body"
-)
+var LackOfDataError = errors.New("lack of data")
+var InvalidBodyError = errors.New("invalid body")
 
 type productHandler struct {
 	ProductService service.ProductService
@@ -36,13 +35,13 @@ func (h *productHandler) ReserveProducts(c *gin.Context) {
 	err := c.BindJSON(req)
 	if err != nil {
 		logger.ErrLog.Println(err)
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": InvalidBodyError})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": InvalidBodyError.Error()})
 		return
 	}
 	if req.WarehouseID == 0 || len(req.UniqueCodes) == 0 || len(req.Counts) == 0 ||
 		len(req.UniqueCodes) != len(req.Counts) {
 		logger.ErrLog.Println("lock of data")
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": LackOfDataError})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": LackOfDataError.Error()})
 		return
 	}
 
@@ -70,12 +69,12 @@ func (h *productHandler) FreeReservation(c *gin.Context) {
 	req := &DTO.ReqFreeReservation{}
 	err := c.BindJSON(req)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": InvalidBodyError})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": InvalidBodyError.Error()})
 		return
 	}
 
 	if len(req.ID) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": LackOfDataError})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": LackOfDataError.Error()})
 		return
 	}
 
@@ -90,7 +89,7 @@ func (h *productHandler) FreeReservation(c *gin.Context) {
 		return
 	}
 	if len(res.Successful) == 0 {
-		c.AbortWithStatusJSON(http.StatusTeapot, gin.H{"unsuccessful": res.Unsuccessful, "errors": res.Errors})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"unsuccessful": res.Unsuccessful, "errors": res.Errors})
 		return
 	}
 
