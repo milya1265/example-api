@@ -3,8 +3,8 @@ package handler
 import (
 	"errors"
 	"example1/internal/DTO"
-	"example1/internal/logger"
 	"example1/internal/service"
+	"example1/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -14,10 +14,11 @@ var InvalidBodyError = errors.New("invalid body")
 
 type productHandler struct {
 	ProductService service.ProductService
+	Logger         logger.Logger
 }
 
 func NewProductHandler(s service.ProductService) ProductHandler {
-	return &productHandler{s}
+	return &productHandler{s, logger.Get()}
 }
 
 type ProductHandler interface {
@@ -30,24 +31,25 @@ func (h *productHandler) Register(router *gin.Engine) {
 }
 
 func (h *productHandler) ReserveProducts(c *gin.Context) {
+	h.Logger.Info("start handler ReserveProducts")
 
 	req := &DTO.ReqReserveProduct{}
 	err := c.BindJSON(req)
 	if err != nil {
-		logger.ErrLog.Println(err)
+		h.Logger.Error(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": InvalidBodyError.Error()})
 		return
 	}
 	if req.WarehouseID == 0 || len(req.UniqueCodes) == 0 || len(req.Counts) == 0 ||
 		len(req.UniqueCodes) != len(req.Counts) {
-		logger.ErrLog.Println("lock of data")
+		h.Logger.Error(LackOfDataError)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": LackOfDataError.Error()})
 		return
 	}
 
 	res, err := h.ProductService.Reserve(req)
 	if err != nil {
-		logger.ErrLog.Println(err)
+		h.Logger.Error(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -66,6 +68,8 @@ func (h *productHandler) ReserveProducts(c *gin.Context) {
 }
 
 func (h *productHandler) FreeReservation(c *gin.Context) {
+	h.Logger.Info("start handler FreeReservation")
+
 	req := &DTO.ReqFreeReservation{}
 	err := c.BindJSON(req)
 	if err != nil {

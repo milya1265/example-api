@@ -105,7 +105,7 @@ curl --location 'http://host/GetAllProducts' \
 400 Bad request
 
 `{"error":"invalid request body"}`
-{"error":"invalid request body"}
+{"error":"invalid request body"}    
 
 
 ### **Обязательные требования**

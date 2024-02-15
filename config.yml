@@ -4,7 +4,5 @@ listen:
 storage:
   host: database
   port: 5432
-  database:
-  username:
-  password:
   ssl_mode: disable
+level_debug: debug

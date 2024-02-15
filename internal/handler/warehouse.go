@@ -3,8 +3,8 @@ package handler
 import (
 	"errors"
 	"example1/internal/DTO"
-	"example1/internal/logger"
 	"example1/internal/service"
+	"example1/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -14,11 +14,13 @@ var ErrInternalError = errors.New("internal error")
 
 type warehouseHandler struct {
 	Service service.WarehouseService
+	Logger  logger.Logger
 }
 
 func NewWarehouseHandler(s service.WarehouseService) WarehouseHandler {
 	return &warehouseHandler{
 		Service: s,
+		Logger:  logger.Get(),
 	}
 }
 
@@ -31,10 +33,12 @@ func (h *warehouseHandler) Register(router *gin.Engine) {
 }
 
 func (h *warehouseHandler) GetAllProducts(c *gin.Context) {
+	h.Logger.Info("start handler GetAllProducts")
+
 	req := DTO.ReqGetProducts{}
 	err := c.BindJSON(&req)
 	if err != nil || req.WarehouseID == 0 {
-		logger.ErrLog.Println(err)
+		h.Logger.Error(err)
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": ErrInvalidBody.Error()})
 		return
 	}
