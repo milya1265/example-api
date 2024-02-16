@@ -30,12 +30,12 @@ func (s *serverAPI) Login(ctx context.Context, req *appv1.LoginReq) (*appv1.Logi
 		return nil, status.Error(codes.InvalidArgument, "invalid password")
 	}
 
-	token, err := s.Service.Login(ctx, req.GetLogin(), req.Password)
+	access, refresh, err := s.Service.Login(ctx, req.GetLogin(), req.Password)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
-	return &appv1.LoginRes{Token: token}, nil
+	return &appv1.LoginRes{AccessToken: access, RefreshToken: refresh}, nil
 }
 
 func (s *serverAPI) Register(ctx context.Context, req *appv1.RegisterReq) (*appv1.RegisterRes, error) {
@@ -59,6 +59,7 @@ func (s *serverAPI) Register(ctx context.Context, req *appv1.RegisterReq) (*appv
 	return &appv1.RegisterRes{UserId: userID}, nil
 
 }
+
 func (s *serverAPI) GetRole(ctx context.Context, req *appv1.GetRoleReq) (*appv1.GetRoleRes, error) {
 	if req.GetUserId() == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid id")
@@ -77,4 +78,21 @@ func (s *serverAPI) GetRole(ctx context.Context, req *appv1.GetRoleReq) (*appv1.
 	}
 
 	return &appv1.GetRoleRes{Role: role}, nil
+}
+
+func (s *serverAPI) GetAccessByRefresh(ctx context.Context, req *appv1.GetAccessByRefreshReq) (*appv1.GetAccessByRefreshRes, error) {
+	if req.GetRefreshToken() == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+
+	access, err := s.Service.GetAccessByRefresh(ctx, req.GetRefreshToken())
+	if err != nil {
+		s.Logger.Error()
+		if errors.Is(err, service.TokenTimeOutErr) {
+			return nil, status.Error(codes.Unauthenticated, service.TokenTimeOutErr.Error())
+		}
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+
+	return &appv1.GetAccessByRefreshRes{AccessToken: access}, nil
 }

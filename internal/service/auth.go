@@ -20,7 +20,7 @@ const (
 
 var (
 	TakeClaimsErr             = errors.New("error get user claims from token")
-	TokenTimeOutErr           = errors.New("manager: token timeout")
+	TokenTimeOutErr           = errors.New("token timeout")
 	UserNotFoundErr           = errors.New("user not found")
 	WrongLoginOrPasswordErr   = errors.New("wrong login or password")
 	FailedGenerateTokenErr    = errors.New("failed to generate token")
@@ -38,10 +38,50 @@ func NewAuthService(r repository.Queries, c config.Config) Auth {
 }
 
 type Auth interface {
-	Login(ctx context.Context, login string, password string) (string, error)
+	Login(ctx context.Context, login string, password string) (string, string, error)
 	RegisterNewUser(ctx context.Context, login string, password string, role string) (userID string, err error)
 	GetRole(ctx context.Context, userID string) (string, error)
 	Authorize(ctx context.Context, access string) (*AuthInfo, error)
+	GetAccessByRefresh(ctx context.Context, refresh string) (string, error)
+}
+
+func (s *authService) GetAccessByRefresh(ctx context.Context, refresh string) (string, error) {
+	//s.Logger.Info(refresh)
+
+	claims, err := ParseSubject(refresh, s.Config.SecretKey)
+	if err != nil {
+		s.Logger.Error(TokenTimeOutErr)
+		return "", TokenTimeOutErr
+	}
+
+	//s.Logger.Info()
+
+	id := claims["id"].(string)
+	login := claims["login"].(string)
+	role := int32(claims["role"].(float64))
+
+	newAccess, err := NewToken(
+		repository.User{
+			ID:    id,
+			Login: login,
+		},
+		role,
+		time.Duration(s.Config.TTLAccessToken)*time.Minute,
+		s.Config.SecretKey)
+
+	if err != nil {
+		s.Logger.Error(err)
+		return "", err
+	}
+	err = s.UserRepository.UpdateAccessToken(ctx, repository.UpdateAccessTokenParams{
+		AccessToken: newAccess, UserID: id,
+	})
+	if err != nil {
+		s.Logger.Error(err)
+		return "", err
+	}
+
+	return newAccess, nil
 }
 
 type AuthInfo struct {
@@ -53,72 +93,17 @@ type AuthInfo struct {
 
 func (s *authService) Authorize(ctx context.Context, access string) (*AuthInfo, error) {
 	claims, err := ParseSubject(access, s.Config.SecretKey)
-	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+	if err != nil {
 		s.Logger.Error(err)
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, TokenTimeOutErr
+		}
 		return nil, err
 	}
 
 	id := claims["id"].(string)
 	login := claims["login"].(string)
-	s.Logger.Info(claims["role"])
 	role := int32(claims["role"].(float64))
-
-	sess, err := s.UserRepository.GetTokens(ctx, id)
-	if err != nil {
-		s.Logger.Error(err)
-		return nil, err
-	}
-
-	exp, err := ParseExpiration(sess.AccessToken, s.Config.SecretKey)
-	if err != nil {
-		s.Logger.Error(err.Error())
-		return nil, err
-	}
-	if exp < time.Now().Unix() {
-		exp, err := ParseExpiration(sess.RefreshToken, s.Config.SecretKey)
-		if err != nil {
-			s.Logger.Error(err)
-			return nil, err
-		}
-		if exp < time.Now().Unix() {
-			if err != nil {
-				s.Logger.Error(err.Error())
-				return nil, TokenTimeOutErr
-			}
-		} else {
-			newAccess, err := NewToken(
-				repository.User{
-					ID:    id,
-					Login: login,
-				},
-				role,
-				time.Duration(s.Config.TTLAccessToken)*time.Minute,
-				s.Config.SecretKey,
-			)
-			if err != nil {
-				s.Logger.Error(err.Error())
-				return nil, err
-			}
-			err = s.UserRepository.UpdateAccessToken(
-				ctx,
-				repository.UpdateAccessTokenParams{
-					AccessToken: newAccess,
-					UserID:      id,
-				},
-			)
-			if err != nil {
-				s.Logger.Error(err.Error())
-				return nil, err
-			}
-
-			return &AuthInfo{
-				ID:          id,
-				Login:       login,
-				Role:        role,
-				AccessToken: newAccess,
-			}, nil
-		}
-	}
 
 	return &AuthInfo{
 		ID:          id,
@@ -128,41 +113,41 @@ func (s *authService) Authorize(ctx context.Context, access string) (*AuthInfo, 
 	}, nil
 }
 
-func (s *authService) Login(ctx context.Context, login string, password string) (string, error) {
+func (s *authService) Login(ctx context.Context, login string, password string) (string, string, error) {
 	user, err := s.UserRepository.GetUser(ctx, login)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			s.Logger.Error(UserNotFoundErr)
-			return "", UserNotFoundErr
+			return "", "", UserNotFoundErr
 		}
 
 		s.Logger.Error(err)
 
-		return "", err
+		return "", "", err
 	}
 
 	err = ComparePassword([]byte(password), []byte(user.PasswordHash))
 	if err != nil {
 		s.Logger.Error(WrongLoginOrPasswordErr, ":", err)
-		return "", WrongLoginOrPasswordErr
+		return "", "", WrongLoginOrPasswordErr
 	}
 
 	role, err := s.UserRepository.GetRole(ctx, user.ID)
 	if err != nil {
 		s.Logger.Error(WrongLoginOrPasswordErr, ":", err)
-		return "", err
+		return "", "", err
 	}
 
 	accessToken, err := NewToken(user, role, time.Duration(s.Config.TTLAccessToken)*time.Minute, s.Config.SecretKey)
 	if err != nil {
 		s.Logger.Error("failed to generate token")
-		return "", FailedGenerateTokenErr
+		return "", "", FailedGenerateTokenErr
 	}
 
 	refreshToken, err := NewToken(user, role, time.Duration(s.Config.TTLRefreshToken)*time.Minute, s.Config.SecretKey)
 	if err != nil {
 		s.Logger.Error("failed to generate token")
-		return "", FailedGenerateTokenErr
+		return "", "", FailedGenerateTokenErr
 	}
 
 	_ = s.UserRepository.CreateTokens(ctx, repository.CreateTokensParams{
@@ -177,10 +162,10 @@ func (s *authService) Login(ctx context.Context, login string, password string) 
 	})
 
 	if err != nil {
-		return "", FailedGenerateTokenErr
+		return "", "", FailedGenerateTokenErr
 	}
 
-	return accessToken, nil
+	return accessToken, refreshToken, nil
 }
 
 func (s *authService) RegisterNewUser(ctx context.Context, login string, password string, role string) (userID string, err error) {

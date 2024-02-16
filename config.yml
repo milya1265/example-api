@@ -9,4 +9,5 @@ storage:
 level_debug: debug
 ttl_access_token: 20
 ttl_refresh_token: 1440
-secret_key: 
+secret_key:
+

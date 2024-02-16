@@ -12,8 +12,19 @@
 
 `$ make test`
 
-### Основные End-Point:
-### `/ReserveProduct` - Отвечает за создание резервирования какого-либо товара(ов), если товаров не хватает, или его нет, то выдаст ошибку.
+## Основные End-Point:
+## в файле proto/app/app.proto можно увидеть end-points связанные с регистрацией и авторизацией.
+
+- rpc Register(RegisterReq) returns (RegisterRes);
+- rpc Login(LoginReq) returns (LoginRes);
+- rpc GetRole(GetRoleReq) returns (GetRoleRes);
+- rpc GetAccessByRefresh(GetAccessByRefreshReq) returns (GetAccessByRefreshRes);
+
+Доступ ка данным методам есть у всех пользователей. Подробное описание сообщений можно посмотреть в proto файле.
+
+
+### `/ReserveProduct` - Отвечает за создание резервирования какого-либо товара(ов), если товаров не хватает, или его нет, то выдаст ошибку. 
+Метод доступен только пользователям "product worker" или "admin"
 
 Есть три обязательных поля: номер склада, массив товаров для резервирования, количество товара, который мы резервируем. Примеры запросов (cURL):
 
@@ -56,11 +67,18 @@ curl --location 'http://host/ReserveProduct' \
 
 `{"successful":[{"id":13,"unique_codes":"tghyuj"}],"unsuccessful":["olkiuj"],"errors":["not enough product"]}` - не хватило продукта на складе, чтобы зарезервировать
 
-или
+или 
+
+400 Bad Request
 
 `{"error": "invalid warehouse id"}`  - если недоступен склад
 
+403 Forbidden
+Если пользователь, не может получить ресурсы
+
+
 ### `/FreeReservation`  - освобождение склада от резервирования.
+Метод доступен только пользователям "product worker" или "admin"
 
 На вход приходит id резервирования. Т.к. один и тот же товар может быть зарезервирован на складе много раз, то конкретное резервирование можно найти по id.
 
@@ -89,9 +107,14 @@ curl --location 'http://host/FreeReservation' \
 or
 `{"error":"invalid body"}`
 
+403 Forbidden
+Если пользователь, не может получить ресурсы
+
+
 ### `GetAllProducts`  - получение всех продуктов на складе
 
 На вход приходит идентификатор склада.
+Метод доступен только пользователям "warehouse worker" или "admin"
 
 curl --location 'http://host/GetAllProducts' \
 --header 'Content-Type: application/json' \
@@ -109,6 +132,9 @@ curl --location 'http://host/GetAllProducts' \
 
 `{"error":"invalid request body"}`
 {"error":"invalid request body"}    
+
+403 Forbidden 
+Если пользователь, не может получить ресурсы
 
 
 ### **Обязательные требования**
