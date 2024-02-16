@@ -13,5 +13,6 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=builder /example1/main .
 COPY --from=builder /example1/config.yml .
-EXPOSE 8081
+COPY --from=builder /example1/.env .
+EXPOSE 8081 8082
 CMD ["./main"]

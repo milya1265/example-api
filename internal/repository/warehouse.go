@@ -2,15 +2,16 @@ package repository
 
 import (
 	"database/sql"
-	"example1/internal/logger"
+	log "example1/pkg/logger"
 )
 
 type warehouseRepository struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Logger log.Logger
 }
 
 func NewWarehouseRepository(db *sql.DB) WarehouseRepository {
-	return &warehouseRepository{db}
+	return &warehouseRepository{db, log.Get()}
 }
 
 type WarehouseRepository interface {
@@ -23,7 +24,7 @@ func (r *warehouseRepository) CheckAvailable(warehouseID int) (bool, error) {
 	available := false
 	err := r.DB.QueryRow(query, warehouseID).Scan(&available)
 	if err != nil {
-		logger.ErrLog.Println(err)
+		r.Logger.Error(err)
 		return false, err
 	}
 	return available, nil
@@ -36,7 +37,7 @@ func (r *warehouseRepository) AllProducts(warehouseID int) ([]string, error) {
 	defer rows.Close()
 
 	if err != nil {
-		logger.ErrLog.Println(err)
+		r.Logger.Error(err)
 		return nil, err
 	}
 
@@ -44,7 +45,7 @@ func (r *warehouseRepository) AllProducts(warehouseID int) ([]string, error) {
 		var code string
 		err = rows.Scan(&code)
 		if err != nil {
-			logger.ErrLog.Println(err)
+			r.Logger.Error(err)
 			return nil, err
 		}
 		codes = append(codes, code)

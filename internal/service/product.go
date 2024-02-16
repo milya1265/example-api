@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"example1/internal/DTO"
-	"example1/internal/logger"
 	"example1/internal/model"
 	"example1/internal/repository"
+	"example1/pkg/logger"
 )
 
 var ErrInvalidUniqueCode = errors.New("invalid unique code")
@@ -19,10 +19,11 @@ var ErrNonExistReservationId = errors.New("non-existent reservation id")
 type productService struct {
 	ProductRepository   repository.ProductRepository
 	WarehouseRepository repository.WarehouseRepository
+	Logger              logger.Logger
 }
 
 func NewProductService(r1 repository.ProductRepository, r2 repository.WarehouseRepository) ProductService {
-	return &productService{r1, r2}
+	return &productService{r1, r2, logger.Get()}
 }
 
 //go:generate mockgen -source=product.go -destination=mocks/mock.go
@@ -33,6 +34,7 @@ type ProductService interface {
 }
 
 func (s *productService) Reserve(reservation *DTO.ReqReserveProduct) (*DTO.ResReserveProduct, error) {
+	s.Logger.Info("start service Reserve")
 
 	result := &DTO.ResReserveProduct{
 		Successful:   make([]DTO.Successful, 0),
@@ -46,7 +48,7 @@ func (s *productService) Reserve(reservation *DTO.ReqReserveProduct) (*DTO.ResRe
 	}
 
 	if available == false {
-		logger.ErrLog.Println(err)
+		s.Logger.Error(err)
 		return nil, ErrWarehouseUnavailable
 	}
 
@@ -98,6 +100,8 @@ func (s *productService) Reserve(reservation *DTO.ReqReserveProduct) (*DTO.ResRe
 }
 
 func (s *productService) FreeReservation(reservations *DTO.ReqFreeReservation) (*DTO.ResFreeReservation, error) {
+	s.Logger.Info("start service FreeReservation")
+
 	result := DTO.ResFreeReservation{
 		Successful:   make([]int, 0),
 		Unsuccessful: make([]int, 0),

@@ -1,21 +1,23 @@
-package server
+package http_server
 
 import (
 	"example1/config"
 	"example1/internal/handler"
-	"example1/internal/logger"
+	"example1/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type httpServer struct {
 	Router *gin.Engine
 	Config *config.Config
+	Logger logger.Logger
 }
 
 func New() HttpServer {
 	return &httpServer{
 		Router: gin.New(),
 		Config: config.GetConfig(),
+		Logger: logger.Get(),
 	}
 }
 
@@ -24,10 +26,11 @@ type HttpServer interface {
 }
 
 func (h *httpServer) ListenAndServe(productHandler handler.ProductHandler, warehouseHandler handler.WarehouseHandler) {
+	h.Logger.Info("starting ListenAndServe server")
 	productHandler.Register(h.Router)
 	warehouseHandler.Register(h.Router)
-	err := h.Router.Run(h.Config.Listen.Port)
+	err := h.Router.Run(h.Config.Listen.HttpPort)
 	if err != nil {
-		logger.Fatal(err)
+		h.Logger.Fatal(err)
 	}
 }

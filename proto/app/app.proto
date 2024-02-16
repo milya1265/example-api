@@ -1,0 +1,40 @@
+syntax  = "proto3";
+
+package auth;
+
+option go_package = "dmilyano.app.v1;appv1";
+
+service Auth{
+  rpc Register(RegisterReq) returns (RegisterRes);
+  rpc Login(LoginReq) returns (LoginRes);
+  rpc GetRole(GetRoleReq) returns (GetRoleRes);
+}
+
+message RegisterReq {
+  string login = 1;
+  string password = 2;
+  string role = 3;
+}
+
+message RegisterRes {
+  string user_id = 1;
+}
+
+message LoginReq {
+  string login = 1;
+  string password = 2;
+}
+
+message LoginRes {
+  string token = 1;
+}
+
+message GetRoleReq {
+  string user_id = 1;
+}
+
+message GetRoleRes {
+  string role = 1;
+}
+
+
