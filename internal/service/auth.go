@@ -46,15 +46,13 @@ type Auth interface {
 }
 
 func (s *authService) GetAccessByRefresh(ctx context.Context, refresh string) (string, error) {
-	//s.Logger.Info(refresh)
+	s.Logger.Info("starting service GetAccessByRefresh")
 
 	claims, err := ParseSubject(refresh, s.Config.SecretKey)
 	if err != nil {
 		s.Logger.Error(TokenTimeOutErr)
 		return "", TokenTimeOutErr
 	}
-
-	//s.Logger.Info()
 
 	id := claims["id"].(string)
 	login := claims["login"].(string)
@@ -92,6 +90,7 @@ type AuthInfo struct {
 }
 
 func (s *authService) Authorize(ctx context.Context, access string) (*AuthInfo, error) {
+	s.Logger.Info("starting service Authorize")
 	claims, err := ParseSubject(access, s.Config.SecretKey)
 	if err != nil {
 		s.Logger.Error(err)
@@ -114,6 +113,8 @@ func (s *authService) Authorize(ctx context.Context, access string) (*AuthInfo, 
 }
 
 func (s *authService) Login(ctx context.Context, login string, password string) (string, string, error) {
+	s.Logger.Info("starting service Login")
+
 	user, err := s.UserRepository.GetUser(ctx, login)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -169,6 +170,8 @@ func (s *authService) Login(ctx context.Context, login string, password string) 
 }
 
 func (s *authService) RegisterNewUser(ctx context.Context, login string, password string, role string) (userID string, err error) {
+	s.Logger.Info("starting service RegisterNewUser")
+
 	passHash, err := HashPassword([]byte(password))
 	if err != nil {
 		s.Logger.Error(FailedGeneratePasswordErr)
@@ -208,6 +211,8 @@ func (s *authService) RegisterNewUser(ctx context.Context, login string, passwor
 }
 
 func (s *authService) GetRole(ctx context.Context, userID string) (string, error) {
+	s.Logger.Info("starting service GetRole")
+
 	role, err := s.UserRepository.GetRole(ctx, userID)
 	if err != nil {
 		s.Logger.Error(err)
