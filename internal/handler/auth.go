@@ -38,7 +38,7 @@ func (h *authHandler) Authorize(c *gin.Context) {
 	authInfo, err := h.Service.Authorize(context.Background(), access)
 	if err != nil {
 		if errors.Is(err, service.TokenTimeOutErr) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"messege": "login again"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "refresh token"})
 			return
 		}
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
