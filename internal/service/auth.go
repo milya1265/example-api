@@ -46,15 +46,13 @@ type Auth interface {
 }
 
 func (s *authService) GetAccessByRefresh(ctx context.Context, refresh string) (string, error) {
-	//s.Logger.Info(refresh)
+	s.Logger.Info("starting service GetAccessByRefresh")
 
 	claims, err := ParseSubject(refresh, s.Config.SecretKey)
 	if err != nil {
 		s.Logger.Error(TokenTimeOutErr)
 		return "", TokenTimeOutErr
 	}
-
-	//s.Logger.Info()
 
 	id := claims["id"].(string)
 	login := claims["login"].(string)
