@@ -14,11 +14,12 @@ var InvalidBodyError = errors.New("invalid body")
 
 type productHandler struct {
 	ProductService service.ProductService
+	Middleware     AuthHandler
 	Logger         logger.Logger
 }
 
-func NewProductHandler(s service.ProductService) ProductHandler {
-	return &productHandler{s, logger.Get()}
+func NewProductHandler(s service.ProductService, auth AuthHandler) ProductHandler {
+	return &productHandler{s, auth, logger.Get()}
 }
 
 type ProductHandler interface {
@@ -26,12 +27,26 @@ type ProductHandler interface {
 }
 
 func (h *productHandler) Register(router *gin.Engine) {
-	router.Handle(http.MethodPost, "/ReserveProduct", h.ReserveProducts)
-	router.Handle(http.MethodPost, "/FreeReservation", h.FreeReservation)
+	router.Handle(http.MethodPost, "/ReserveProduct", h.Middleware.Authorize, h.ReserveProducts)
+	router.Handle(http.MethodPost, "/FreeReservation", h.Middleware.Authorize, h.FreeReservation)
 }
 
 func (h *productHandler) ReserveProducts(c *gin.Context) {
 	h.Logger.Info("start handler ReserveProducts")
+
+	temp, ok := c.Get("role")
+	h.Logger.Info(temp)
+	if !ok {
+		h.Logger.Error("unauthorized")
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userRole := temp.(int32)
+	if userRole != productWorker && userRole != admin {
+		h.Logger.Error("forbidden")
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
 
 	req := &DTO.ReqReserveProduct{}
 	err := c.BindJSON(req)
@@ -69,6 +84,19 @@ func (h *productHandler) ReserveProducts(c *gin.Context) {
 
 func (h *productHandler) FreeReservation(c *gin.Context) {
 	h.Logger.Info("start handler FreeReservation")
+
+	temp, ok := c.Get("role")
+	if !ok {
+		h.Logger.Error("unauthorized")
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	userRole := temp.(int32)
+	if userRole != productWorker && userRole != admin {
+		h.Logger.Error("forbidden")
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
 
 	req := &DTO.ReqFreeReservation{}
 	err := c.BindJSON(req)

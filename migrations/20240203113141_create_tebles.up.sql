@@ -1,4 +1,26 @@
-CREATE TABLE warehouse
+CREATE TABLE IF NOT EXISTS users
+(
+    id  varchar(40) unique PRIMARY KEY,
+    login varchar(  30) unique,
+    password_hash varchar(100)
+);
+
+CREATE TABLE IF NOT EXISTS jwt
+(
+    user_id           varchar(40) unique  not null ,
+    foreign key (user_id) REFERENCES users (id),
+    access_token varchar(200)  not null,
+    refresh_token varchar(200) not null
+);
+
+CREATE TABLE IF NOT EXISTS users_role
+(
+    user_id   varchar(40) unique,
+    foreign key (user_id) REFERENCES users (id),
+    role integer
+);
+
+CREATE TABLE IF NOT EXISTS  warehouse
 (
     id        serial primary key,
     name      VARCHAR(100) unique,

@@ -10,11 +10,15 @@ import (
 
 type Config struct {
 	Listen struct {
-		BindIP string `yaml:"bind_ip" env-default:"127.0.0.1"`
-		Port   string `yaml:"port" env-default:"8080"`
+		BindIP   string `yaml:"bind_ip" env-default:"127.0.0.1"`
+		HttpPort string `yaml:"http_port" env-default:"8080"`
+		GrpcPort string `yaml:"grpc_port" env-default:"8080"`
 	} `yaml:"listen"`
-	Storage    StorageConfig `yaml:"storage"`
-	LevelDebug string        `yaml:"level_debug"`
+	Storage         StorageConfig `yaml:"storage"`
+	LevelDebug      string        `yaml:"level_debug"`
+	TTLAccessToken  int           `yaml:"ttl_access_token"`
+	TTLRefreshToken int           `yaml:"ttl_refresh_token"`
+	SecretKey       string        `yaml:"secret_key"`
 }
 
 type StorageConfig struct {

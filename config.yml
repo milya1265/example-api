@@ -1,8 +1,12 @@
 listen:
   type: port
-  port: app:8081
+  http_port: app:8081
+  grpc_port: app:8082
 storage:
   host: database
   port: 5432
   ssl_mode: disable
 level_debug: debug
+ttl_access_token: 20
+ttl_refresh_token: 1440
+secret_key: qwerty

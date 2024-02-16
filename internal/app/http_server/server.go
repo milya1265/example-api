@@ -1,4 +1,4 @@
-package server
+package http_server
 
 import (
 	"example1/config"
@@ -29,7 +29,7 @@ func (h *httpServer) ListenAndServe(productHandler handler.ProductHandler, wareh
 	h.Logger.Info("starting ListenAndServe server")
 	productHandler.Register(h.Router)
 	warehouseHandler.Register(h.Router)
-	err := h.Router.Run(h.Config.Listen.Port)
+	err := h.Router.Run(h.Config.Listen.HttpPort)
 	if err != nil {
 		h.Logger.Fatal(err)
 	}

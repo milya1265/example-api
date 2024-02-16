@@ -14,5 +14,5 @@ WORKDIR /root/
 COPY --from=builder /example1/main .
 COPY --from=builder /example1/config.yml .
 COPY --from=builder /example1/.env .
-EXPOSE 8081
+EXPOSE 8081 8082
 CMD ["./main"]
