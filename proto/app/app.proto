@@ -8,6 +8,7 @@ service Auth{
   rpc Register(RegisterReq) returns (RegisterRes);
   rpc Login(LoginReq) returns (LoginRes);
   rpc GetRole(GetRoleReq) returns (GetRoleRes);
+  rpc GetAccessByRefresh(GetAccessByRefreshReq) returns (GetAccessByRefreshRes);
 }
 
 message RegisterReq {
@@ -26,7 +27,8 @@ message LoginReq {
 }
 
 message LoginRes {
-  string token = 1;
+  string access_token = 1;
+  string refresh_token = 2;
 }
 
 message GetRoleReq {
@@ -37,4 +39,11 @@ message GetRoleRes {
   string role = 1;
 }
 
+message GetAccessByRefreshReq{
+  string refresh_token = 1;
+}
+
+message GetAccessByRefreshRes{
+  string access_token = 1;
+}
 

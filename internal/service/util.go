@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	repository "example1/internal/repository/sqlc/generate"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
@@ -46,7 +45,7 @@ func ParseSubject(Token string, secretKey string) (jwt.MapClaims, error) {
 		}
 		return []byte(secretKey), nil
 	})
-	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+	if err != nil {
 		return nil, err
 	}
 
@@ -65,7 +64,7 @@ func ParseExpiration(t string, s string) (int64, error) {
 		}
 		return []byte(s), nil
 	})
-	if err != nil && !errors.Is(err, jwt.ErrTokenExpired) {
+	if err != nil {
 		return 0, err
 	}
 
