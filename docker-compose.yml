@@ -6,7 +6,6 @@ services:
     container_name: my_app
     build: .
     ports:
-#      - "127.0.0.1:8082:8082/tcp"
       - "8081-8082:8081-8082"
     restart: on-failure
     volumes:
